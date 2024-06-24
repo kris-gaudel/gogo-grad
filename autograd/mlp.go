@@ -28,3 +28,9 @@ func (m *MLP) Parameters() []*Value {
 	}
 	return params
 }
+
+func (m *MLP) ZeroGrad() {
+	for _, param := range m.Parameters() {
+		param.grad = 0.0
+	}
+}

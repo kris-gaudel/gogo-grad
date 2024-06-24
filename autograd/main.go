@@ -5,50 +5,43 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello world!")
+	// Sine example (Training a neural network to approximate the sine function)
+	model := InitMLP(2, []int{16, 16, 1})
+	xs, ys := LoadMoonsData()
+	iters := 100
 
-	// Testing the engine
-	a := Init(2.0)
-	b := Init(-3.0)
-	c := Init(10.0)
-	e := a.Mult(b)
-	d := e.Add(c)
-	f := Init(-2.0)
-	L := d.Mult(f)
+	for i := 0; i < iters; i++ {
+		totalLoss, accuracy := Loss(model, xs, ys)
 
-	L.Backward()
-	fmt.Printf("dL/da = %f\n", a.grad)
-	fmt.Printf("dL/db = %f\n", b.grad)
-	fmt.Printf("dL/dc = %f\n", c.grad)
-	fmt.Printf("dL/de = %f\n", e.grad)
-	fmt.Printf("dL/dd = %f\n", d.grad)
-	fmt.Printf("dL/df = %f\n", f.grad)
-	fmt.Printf("dL/dL = %f\n", L.grad)
+		model.ZeroGrad()
+		totalLoss.Backward()
 
-	// Testing the neuron
-	// x := make([]*Value, 2)
-	// x[0] = Init(2.0)
-	// x[1] = Init(3.0)
-	// n := InitNeuron(2, true)
-	// y := n.Forward(x)
-	// fmt.Println(y.data)
+		SGD(model, i, iters)
+		fmt.Printf("Step %d loss %.5f, accuracy %.5f%%\n", i, totalLoss.data, accuracy*100)
+	}
 
-	// Testing the layer
-	// x := make([]*Value, 2)
-	// x[0] = Init(2.0)
-	// x[1] = Init(3.0)
-	// l := InitLayer(2, 3, true)
-	// y := l.Forward(x)
-	// for i := range y {
-	// 	fmt.Println(y[i].data)
-	// }
+	grid := make([][]string, 0)
+	bound := 20
+	for y := -bound; y < bound; y++ {
+		row := make([]string, 0)
+		for x := -bound; x < bound; x++ {
+			k := model.Forward([]*Value{
+				Init(float64(x) / float64(bound) * 2.0),
+				Init(-float64(y) / float64(bound) * 2.0),
+			})[0]
+			if k.data > 0.0 {
+				row = append(row, "*")
+			} else {
+				row = append(row, ".")
+			}
+		}
+		grid = append(grid, row)
+	}
 
-	// Testing the MLP
-	x := make([]*Value, 3)
-	x[0] = Init(2.0)
-	x[1] = Init(3.0)
-	x[2] = Init(-1.0)
-	m := InitMLP(3, []int{4, 4, 1})
-	y := m.Forward(x)
-	fmt.Println(y[0].data)
+	for _, row := range grid {
+		for _, val := range row {
+			fmt.Printf("%s ", val)
+		}
+		fmt.Println()
+	}
 }
